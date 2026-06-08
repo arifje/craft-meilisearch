@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.2.0 - 2026-06-08
+
+Inspired by a study of FosterCommerce's meilisearch-connect.
+
+### Added
+- **Utilities screen** (CP → Utilities → Meilisearch): live connection status, indexed document count, the configured sources, and **Reindex** / **Flush & reindex** buttons (queued via a new `ReindexJob`). Registered with a Craft 4/5 shim for the renamed utilities event.
+- **Index-settings passthrough**: a new `indexSettings` config key forwards any Meilisearch update-settings payload (`searchableAttributes`, `rankingRules`, `synonyms`, `stopWords`, `typoTolerance`, `faceting`, …) on every reindex. The plugin's always-on filterable/sortable attributes are merged in.
+- **Configurable active statuses**: `activeStatuses` (plugin-wide) and per-source `statuses` control which element statuses are indexed, replacing the previously hardcoded list.
+
+### Verified
+- All three exercised end-to-end on Craft 4.17 + Meilisearch v1.10: settings applied to the daemon (synonym `ms`→`meilisearch` affects results), disabling an entry removed it via per-source statuses, and the Utilities template renders with status/count/buttons.
+
 ## 1.1.0 - 2026-06-08
 
 ### Added

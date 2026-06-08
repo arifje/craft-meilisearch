@@ -91,6 +91,26 @@ class Settings extends Model
     public array $sortableAttributes = [];
 
     /**
+     * Additional Meilisearch index settings applied verbatim on (re)index, on top
+     * of the filterable/sortable attributes above. Any key from the Meilisearch
+     * "update settings" endpoint is accepted, e.g. `searchableAttributes`,
+     * `rankingRules`, `synonyms`, `stopWords`, `typoTolerance`, `faceting`.
+     *
+     * @see https://www.meilisearch.com/docs/reference/api/settings
+     * @var array<string,mixed>
+     */
+    public array $indexSettings = [];
+
+    /**
+     * Element statuses that count as "show in search". Used as the default for
+     * every source; a source may override it with its own `statuses` key. Entries
+     * are `live`; most other element types are `enabled`; users are `active`.
+     *
+     * @var string[]
+     */
+    public array $activeStatuses = ['live', 'enabled', 'active'];
+
+    /**
      * Keep indexes in sync automatically by listening to element save/delete
      * events. Turn off if you prefer to drive indexing purely from the console
      * command / your own jobs.
@@ -114,7 +134,7 @@ class Settings extends Model
             [['hostUrl', 'apiKey', 'searchKey', 'indexPrefix', 'indexName'], 'string'],
             [['indexName'], 'match', 'pattern' => '/^[A-Za-z0-9_-]+$/',
                 'message' => 'Index name may only contain letters, numbers, hyphens and underscores.'],
-            [['sources', 'filterableAttributes', 'sortableAttributes'], 'safe'],
+            [['sources', 'filterableAttributes', 'sortableAttributes', 'indexSettings', 'activeStatuses'], 'safe'],
             [['syncOnSave', 'queueSync', 'searchEndpointEnabled'], 'boolean'],
         ];
     }

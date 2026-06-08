@@ -110,15 +110,15 @@ class Meilisearch extends Component
     // -- Index management ----------------------------------------------------
 
     /**
-     * Create the index if it does not exist and push the searchable / filterable
-     * / sortable attribute configuration. Idempotent — safe to call on every
-     * boot or reindex.
+     * Create the index if it does not exist and push its settings. Idempotent —
+     * safe to call on every boot or reindex.
      *
-     * @param string[] $filterable
-     * @param string[] $sortable
+     * @param array<string,mixed> $settings A Meilisearch "update settings"
+     *        payload (filterableAttributes, sortableAttributes, rankingRules,
+     *        synonyms, …).
      * @throws MeilisearchException
      */
-    public function ensureIndex(string $uid, string $primaryKey, array $filterable, array $sortable): void
+    public function ensureIndex(string $uid, string $primaryKey, array $settings): void
     {
         // Creating an index that already exists returns a benign error code; we
         // treat "index_already_exists" as success.
@@ -133,10 +133,13 @@ class Meilisearch extends Component
             }
         }
 
-        $this->request($this->adminClient(), 'PATCH', "indexes/{$uid}/settings", [
-            'filterableAttributes' => array_values(array_unique($filterable)),
-            'sortableAttributes'   => array_values(array_unique($sortable)),
-        ]);
+        $this->request($this->adminClient(), 'PATCH', "indexes/{$uid}/settings", $settings);
+    }
+
+    /** Index statistics (numberOfDocuments, isIndexing, …). @throws MeilisearchException */
+    public function stats(string $uid): array
+    {
+        return $this->request($this->adminClient(), 'GET', "indexes/{$uid}/stats");
     }
 
     /** Delete the whole index. Ignores a missing index. @throws MeilisearchException */

@@ -10,6 +10,8 @@ component**.
 - **Automatic sync** on element save / delete / restore (inline or queued).
 - **Server-side search proxy** so your Meilisearch host and key never reach the browser.
 - **Console commands** for full reindexing.
+- **Utilities screen** (CP → Utilities → Meilisearch) showing connection status, document count and Reindex/Flush buttons.
+- **Full index-settings passthrough** — synonyms, stop words, ranking rules, searchable attributes, typo tolerance, …
 - **Vue component** included — as an SFC for build setups and a no-build custom element.
 
 ## Requirements
@@ -65,6 +67,28 @@ Every document always includes `objectID`, `elementId`, `siteId`, `source`,
 `type`, `sectionHandle`, `status`, `title`, `slug`, `url` and `postDate`, plus
 any custom field handles you list under `fields`.
 
+Each source may set `statuses` to control which element statuses are indexed
+(defaults to the plugin-wide `activeStatuses`: `live`, `enabled`, `active`).
+
+### Tuning the index
+
+Anything from Meilisearch's [update-settings endpoint](https://www.meilisearch.com/docs/reference/api/settings)
+can be passed through `indexSettings`, applied on every (re)index:
+
+```php
+return [
+    'indexSettings' => [
+        'searchableAttributes' => ['title', 'summary', 'body'],
+        'rankingRules'         => ['words', 'typo', 'proximity', 'attribute', 'sort', 'exactness'],
+        'stopWords'            => ['the', 'a', 'an'],
+        'synonyms'             => ['nyc' => ['new york']],
+    ],
+];
+```
+
+The plugin's always-on `filterableAttributes`/`sortableAttributes` are merged in
+automatically.
+
 ## Indexing
 
 Content is synced automatically when you save or delete elements. To (re)build
@@ -78,6 +102,10 @@ php craft meilisearch/index/flush      # drop the index and rebuild
 
 Indexing is asynchronous on the Meilisearch side, so allow a moment after a
 reindex before results appear.
+
+You can also reindex from the control panel: **Utilities → Meilisearch** shows
+the connection status and document count, with **Reindex** and **Flush &
+reindex** buttons (both run on the queue).
 
 ## Searching
 
@@ -128,7 +156,9 @@ See [`vue/README.md`](vue/README.md) for props, events and slots.
 | `services/IndexService` | Turns elements into flat documents and keeps the index in sync |
 | `controllers/SearchController` | Public JSON search proxy using the search-only key |
 | `jobs/IndexElementJob` | Per-element (re)index / delete on the queue |
+| `jobs/ReindexJob` | Full reindex / flush on the queue (used by the Utilities buttons) |
 | `console/IndexController` | `health` / `reindex` / `flush` commands |
+| `utilities/Indices` | CP Utilities screen: status, document count, Reindex/Flush |
 
 ## License
 

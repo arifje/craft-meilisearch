@@ -26,12 +26,6 @@ class IndexService extends Component
 {
     public const PRIMARY_KEY = 'objectID';
 
-    /**
-     * Statuses that count as "show this in search". Covers entries ('live'),
-     * enabled-by-default elements ('enabled') and users ('active').
-     */
-    private const VISIBLE_STATUSES = ['live', 'enabled', 'active'];
-
     private function settings(): Settings
     {
         return Plugin::getInstance()->getSettings();
@@ -44,17 +38,20 @@ class IndexService extends Component
 
     /**
      * The configured sources, falling back to "all entries" when none are set.
+     * Each source's `statuses` defaults to the plugin-wide `activeStatuses`.
      *
-     * @return array<int,array{type:string,criteria:array,fields:string[]}>
+     * @return array<int,array{type:string,criteria:array,fields:string[],statuses:string[]}>
      */
     public function getSources(): array
     {
+        $default = $this->settings()->activeStatuses;
         $sources = $this->settings()->sources;
         if (empty($sources)) {
             return [[
                 'type'     => Entry::class,
                 'criteria' => [],
                 'fields'   => [],
+                'statuses' => $default,
             ]];
         }
 
@@ -64,6 +61,7 @@ class IndexService extends Component
                 'type'     => $source['type'] ?? Entry::class,
                 'criteria' => $source['criteria'] ?? [],
                 'fields'   => $source['fields'] ?? [],
+                'statuses' => $source['statuses'] ?? $default,
             ];
         }
         return $normalized;
@@ -97,7 +95,31 @@ class IndexService extends Component
     }
 
     /**
-     * Create the index (if needed) and push its attribute configuration.
+     * The full Meilisearch index settings payload: the admin's `indexSettings`
+     * verbatim, with our always-on filterable/sortable attributes merged in (so
+     * the plugin's own filters/sorts keep working even if the admin also lists
+     * their own).
+     *
+     * @return array<string,mixed>
+     */
+    public function indexSettingsPayload(): array
+    {
+        $payload = $this->settings()->indexSettings;
+
+        $payload['filterableAttributes'] = array_values(array_unique(array_merge(
+            $this->filterableAttributes(),
+            $payload['filterableAttributes'] ?? [],
+        )));
+        $payload['sortableAttributes'] = array_values(array_unique(array_merge(
+            $this->sortableAttributes(),
+            $payload['sortableAttributes'] ?? [],
+        )));
+
+        return $payload;
+    }
+
+    /**
+     * Create the index (if needed) and push its full settings configuration.
      *
      * @throws MeilisearchException
      */
@@ -106,9 +128,22 @@ class IndexService extends Component
         $this->client()->ensureIndex(
             $this->settings()->getIndexName(),
             self::PRIMARY_KEY,
-            $this->filterableAttributes(),
-            $this->sortableAttributes(),
+            $this->indexSettingsPayload(),
         );
+    }
+
+    /**
+     * Number of documents currently in the index, or null if the index doesn't
+     * exist yet / can't be reached. Used by the Utilities screen.
+     */
+    public function documentCount(): ?int
+    {
+        try {
+            $stats = $this->client()->stats($this->settings()->getIndexName());
+            return isset($stats['numberOfDocuments']) ? (int) $stats['numberOfDocuments'] : null;
+        } catch (MeilisearchException $e) {
+            return null;
+        }
     }
 
     /**
@@ -131,6 +166,30 @@ class IndexService extends Component
             }
         }
         return false;
+    }
+
+    /**
+     * The active-status list to apply to an element: the first matching source's
+     * `statuses`, falling back to the plugin-wide default.
+     *
+     * @return string[]
+     */
+    private function statusesFor(ElementInterface $element): array
+    {
+        foreach ($this->getSources() as $source) {
+            if (!$element instanceof $source['type']) {
+                continue;
+            }
+            $sections = $source['criteria']['section'] ?? null;
+            if ($sections === null) {
+                return $source['statuses'];
+            }
+            $handle = $this->sectionHandle($element);
+            if ($handle !== null && in_array($handle, (array) $sections, true)) {
+                return $source['statuses'];
+            }
+        }
+        return $this->settings()->activeStatuses;
     }
 
     /**
@@ -176,13 +235,13 @@ class IndexService extends Component
     public function indexElement(ElementInterface $element): void
     {
         // Only index the canonical element that is actually visible; drafts,
-        // revisions and not-live elements (disabled/pending/expired) are removed
-        // instead so search stays clean. Different element types report different
-        // "good" status strings — entries are 'live', most others 'enabled'.
+        // revisions and not-active elements (disabled/pending/expired) are removed
+        // instead so search stays clean. Which statuses count as "active" is
+        // configurable per source (default: live/enabled/active).
         $visible = $element->getIsCanonical()
             && !$element->getIsDraft()
             && !$element->getIsRevision()
-            && in_array($element->getStatus(), self::VISIBLE_STATUSES, true);
+            && in_array($element->getStatus(), $this->statusesFor($element), true);
 
         if (!$visible) {
             $this->deleteElement($element);

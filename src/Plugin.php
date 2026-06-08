@@ -6,13 +6,16 @@ use arifje\craftmeilisearch\jobs\IndexElementJob;
 use arifje\craftmeilisearch\models\Settings;
 use arifje\craftmeilisearch\services\IndexService;
 use arifje\craftmeilisearch\services\Meilisearch;
+use arifje\craftmeilisearch\utilities\Indices;
 use Craft;
 use craft\base\Element;
 use craft\base\ElementInterface;
 use craft\base\Model;
 use craft\base\Plugin as BasePlugin;
 use craft\events\ElementEvent;
+use craft\events\RegisterComponentTypesEvent;
 use craft\services\Elements;
+use craft\services\Utilities;
 use yii\base\Event;
 
 /**
@@ -59,6 +62,27 @@ class Plugin extends BasePlugin
         }
 
         $this->attachElementSyncHandlers();
+        $this->registerUtility();
+    }
+
+    /**
+     * Add the "Meilisearch" Utilities screen. Craft 5 renamed the registration
+     * event from EVENT_REGISTER_UTILITY_TYPES to EVENT_REGISTER_UTILITIES, so we
+     * pick the right one at runtime to keep a single codebase working on both.
+     */
+    private function registerUtility(): void
+    {
+        $isCraft5 = version_compare(Craft::$app->getVersion(), '5.0.0-RC1', '>=');
+        /** @phpstan-ignore-next-line constant renamed across Craft versions */
+        $event = $isCraft5 ? Utilities::EVENT_REGISTER_UTILITIES : Utilities::EVENT_REGISTER_UTILITY_TYPES;
+
+        Event::on(
+            Utilities::class,
+            $event,
+            static function (RegisterComponentTypesEvent $event): void {
+                $event->types[] = Indices::class;
+            }
+        );
     }
 
     protected function createSettingsModel(): ?Model

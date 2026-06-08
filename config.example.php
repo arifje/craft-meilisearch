@@ -29,6 +29,9 @@ return [
             'type'     => Entry::class,
             'criteria' => ['section' => ['news', 'blog']],
             'fields'   => ['summary', 'body'],   // extra custom field handles to index
+            // Optional: which element statuses count as indexable for this source.
+            // Defaults to `activeStatuses` below.
+            // 'statuses' => ['live'],
         ],
         // 'products' => [
         //     'type'     => \craft\commerce\elements\Product::class,
@@ -37,10 +40,24 @@ return [
         // ],
     ],
 
+    // Element statuses treated as "show in search", used as the default for every
+    // source (entries are 'live', most elements 'enabled', users 'active').
+    'activeStatuses' => ['live', 'enabled', 'active'],
+
     // Attributes you want to filter or sort on (beyond the always-on ones:
     // source, type, sectionHandle, status, siteId, elementId / postDate, title).
     'filterableAttributes' => [],
     'sortableAttributes'   => [],
+
+    // Any other Meilisearch index settings, applied verbatim on (re)index.
+    // See https://www.meilisearch.com/docs/reference/api/settings
+    'indexSettings' => [
+        // 'searchableAttributes' => ['title', 'summary', 'body'],
+        // 'rankingRules' => ['words', 'typo', 'proximity', 'attribute', 'sort', 'exactness'],
+        // 'stopWords'    => ['the', 'a', 'an'],
+        // 'synonyms'     => ['nyc' => ['new york']],
+        // 'typoTolerance' => ['minWordSizeForTypos' => ['oneTypo' => 4, 'twoTypos' => 8]],
+    ],
 
     // --- Behaviour ---
     'syncOnSave'            => true,

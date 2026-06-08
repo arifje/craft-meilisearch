@@ -1,0 +1,61 @@
+{# @var health        array #}
+{# @var configured    bool #}
+{# @var indexName     string #}
+{# @var documentCount int|null #}
+{# @var sources       array #}
+
+<div class="meilisearch-status" style="margin-bottom:24px;padding:10px 14px;border-radius:5px;border:1px solid {{ health.ok ? '#27ab83' : '#cf1124' }};background:{{ health.ok ? 'rgba(39,171,131,.08)' : 'rgba(207,17,36,.06)' }};">
+    <strong>{{ health.ok ? '✓ Connected' : '✗ Not connected' }}</strong>
+    <span style="color:#596673;">— {{ health.message }}</span>
+</div>
+
+{% if configured %}
+    <table class="data fullwidth" style="margin-bottom:24px;">
+        <tbody>
+            <tr>
+                <th style="width:200px;">Index</th>
+                <td><code>{{ indexName }}</code></td>
+            </tr>
+            <tr>
+                <th>Documents</th>
+                <td>{{ documentCount is null ? '—' : documentCount }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Indexed sources</h2>
+    <table class="data fullwidth" style="margin-bottom:24px;">
+        <thead>
+            <tr><th>Element type</th><th>Criteria</th><th>Active statuses</th><th>Extra fields</th></tr>
+        </thead>
+        <tbody>
+            {% for source in sources %}
+                <tr>
+                    <td><code>{{ source.type }}</code></td>
+                    <td>{{ source.criteria is empty ? '—' : source.criteria|json_encode }}</td>
+                    <td>{{ source.statuses|join(', ') }}</td>
+                    <td>{{ source.fields is empty ? '—' : source.fields|join(', ') }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="buttons">
+        <form method="post" accept-charset="UTF-8" style="display:inline-block;">
+            {{ csrfInput() }}
+            {{ actionInput('meilisearch/maintenance/reindex') }}
+            {{ redirectInput('utilities/meilisearch') }}
+            <button type="submit" class="btn submit">{{ 'Reindex'|t('app') }}</button>
+        </form>
+        <form method="post" accept-charset="UTF-8" style="display:inline-block;">
+            {{ csrfInput() }}
+            {{ actionInput('meilisearch/maintenance/flush') }}
+            {{ redirectInput('utilities/meilisearch') }}
+            <button type="submit" class="btn">{{ 'Flush & reindex'|t('app') }}</button>
+        </form>
+    </div>
+    <p class="light" style="margin-top:12px;">Reindexing runs on the queue. Meilisearch then processes the documents asynchronously.</p>
+{% else %}
+    <p class="light">Configure the host URL and API key in
+        <a href="{{ url('settings/plugins/meilisearch') }}">Settings → Plugins → Meilisearch</a> first.</p>
+{% endif %}
