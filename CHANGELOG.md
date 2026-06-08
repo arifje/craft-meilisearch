@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.1 - 2026-06-08
+
+### Fixed
+- Console command crashed with a fatal "Access level to … run() must be public" error: the private `run()` helper in `IndexController` collided with Yii's public `Controller::run()`. Renamed to `rebuild()`. Verified end-to-end on Craft 4.17 against a live Meilisearch daemon (health, flush/reindex, search proxy, filtering, highlighting and the save-sync hook).
+
 ## 1.0.0 - 2026-06-08
 
 ### Added

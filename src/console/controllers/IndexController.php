@@ -32,16 +32,17 @@ class IndexController extends Controller
     /** (Re)index every configured source, upserting documents into the index. */
     public function actionReindex(): int
     {
-        return $this->run(false);
+        return $this->rebuild(false);
     }
 
     /** Delete the index entirely and rebuild it from scratch. */
     public function actionFlush(): int
     {
-        return $this->run(true);
+        return $this->rebuild(true);
     }
 
-    private function run(bool $flush): int
+    // Note: not named run() — that collides with the public yii\base\Controller::run().
+    private function rebuild(bool $flush): int
     {
         $index = Plugin::getInstance()->index;
         $progress = fn(string $message) => $this->stdout($message . PHP_EOL);
