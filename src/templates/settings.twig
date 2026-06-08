@@ -1,0 +1,107 @@
+{# @var settings \arifje\craftmeilisearch\models\Settings #}
+{# @var health   array #}
+{# @var sources  array #}
+{% import "_includes/forms" as forms %}
+
+<div class="meilisearch-status" style="margin-bottom:24px;padding:10px 14px;border-radius:5px;border:1px solid {{ health.ok ? '#27ab83' : '#cf1124' }};background:{{ health.ok ? 'rgba(39,171,131,.08)' : 'rgba(207,17,36,.06)' }};">
+    <strong>{{ health.ok ? '✓ Connected' : '✗ Not connected' }}</strong>
+    <span style="color:#596673;">— {{ health.message }}</span>
+</div>
+
+{{ forms.autosuggestField({
+    label: 'Host URL',
+    instructions: 'Base URL of your hosted Meilisearch daemon, e.g. `https://ms-xxxx.meilisearch.io`. Supports environment variables.',
+    id: 'hostUrl',
+    name: 'hostUrl',
+    value: settings.hostUrl,
+    suggestEnvVars: true,
+    required: true,
+}) }}
+
+{{ forms.autosuggestField({
+    label: 'Admin API key',
+    instructions: 'Master/admin key, used for indexing and index administration. Best stored in an environment variable.',
+    id: 'apiKey',
+    name: 'apiKey',
+    value: settings.apiKey,
+    suggestEnvVars: true,
+    required: true,
+}) }}
+
+{{ forms.autosuggestField({
+    label: 'Search-only key',
+    instructions: 'Optional. Used for front-end queries so the admin key stays off the public path. Falls back to the admin key when blank.',
+    id: 'searchKey',
+    name: 'searchKey',
+    value: settings.searchKey,
+    suggestEnvVars: true,
+}) }}
+
+<hr>
+
+{{ forms.textField({
+    label: 'Index name',
+    instructions: 'Base name of the Meilisearch index Craft writes to.',
+    id: 'indexName',
+    name: 'indexName',
+    value: settings.indexName,
+    required: true,
+}) }}
+
+{{ forms.textField({
+    label: 'Index prefix',
+    instructions: 'Optional prefix prepended to the index name — useful when several environments share one host, e.g. `staging_`.',
+    id: 'indexPrefix',
+    name: 'indexPrefix',
+    value: settings.indexPrefix,
+}) }}
+
+<hr>
+
+{{ forms.lightswitchField({
+    label: 'Sync on save',
+    instructions: 'Automatically index/remove elements when they are saved or deleted.',
+    id: 'syncOnSave',
+    name: 'syncOnSave',
+    on: settings.syncOnSave,
+}) }}
+
+{{ forms.lightswitchField({
+    label: 'Queue sync',
+    instructions: 'Run per-element indexing on the queue rather than inline during the request. Recommended.',
+    id: 'queueSync',
+    name: 'queueSync',
+    on: settings.queueSync,
+}) }}
+
+{{ forms.lightswitchField({
+    label: 'Search endpoint enabled',
+    instructions: 'Expose the public JSON search proxy (`/actions/meilisearch/search/query`) used by the Vue component.',
+    id: 'searchEndpointEnabled',
+    name: 'searchEndpointEnabled',
+    on: settings.searchEndpointEnabled,
+}) }}
+
+<hr>
+
+<h2>Indexed sources</h2>
+<p class="light">Source, filterable and sortable configuration live in <code>config/meilisearch.php</code>. Currently indexing:</p>
+<table class="data fullwidth">
+    <thead>
+        <tr><th>Element type</th><th>Criteria</th><th>Extra fields</th></tr>
+    </thead>
+    <tbody>
+        {% for source in sources %}
+            <tr>
+                <td><code>{{ source.type }}</code></td>
+                <td>{{ source.criteria is empty ? '—' : source.criteria|json_encode }}</td>
+                <td>{{ source.fields is empty ? '—' : source.fields|join(', ') }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<p class="light" style="margin-top:16px;">
+    Reindex from the console: <code>php craft meilisearch/index/reindex</code>
+    (or <code>flush</code> to rebuild from scratch).
+</p>

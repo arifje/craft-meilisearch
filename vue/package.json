@@ -1,0 +1,28 @@
+{
+  "name": "@arifje/craft-meilisearch-vue",
+  "version": "1.0.0",
+  "description": "Vue 3 instant-search component for the craft-meilisearch plugin.",
+  "type": "module",
+  "main": "MeilisearchSearch.vue",
+  "module": "MeilisearchSearch.vue",
+  "exports": {
+    ".": "./MeilisearchSearch.vue",
+    "./global": "./meilisearch-search.global.js"
+  },
+  "files": [
+    "MeilisearchSearch.vue",
+    "meilisearch-search.global.js",
+    "README.md"
+  ],
+  "keywords": [
+    "craft",
+    "meilisearch",
+    "vue",
+    "search",
+    "instant-search"
+  ],
+  "peerDependencies": {
+    "vue": "^3.0.0"
+  },
+  "license": "MIT"
+}
