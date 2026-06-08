@@ -122,20 +122,38 @@ class Settings extends Model
     /** Host URL with any `$ENV_VAR` expanded and a trailing slash trimmed. */
     public function getResolvedHostUrl(): string
     {
-        return rtrim((string) App::parseEnv($this->hostUrl), '/');
+        return rtrim($this->resolve($this->hostUrl), '/');
     }
 
     /** Admin API key with env syntax expanded. */
     public function getResolvedApiKey(): string
     {
-        return (string) App::parseEnv($this->apiKey);
+        return $this->resolve($this->apiKey);
     }
 
     /** Search key with env syntax expanded, falling back to the admin key. */
     public function getResolvedSearchKey(): string
     {
-        $key = (string) App::parseEnv($this->searchKey);
+        $key = $this->resolve($this->searchKey);
         return $key !== '' ? $key : $this->getResolvedApiKey();
+    }
+
+    /**
+     * Expand Craft env syntax, treating an *unresolved* placeholder as empty.
+     *
+     * `App::parseEnv('$FOO')` returns the literal string `$FOO` when no such env
+     * var is set. Left as-is that reads as a configured-but-wrong value (a bogus
+     * host or API key). Collapsing unresolved `$VAR` placeholders to '' lets
+     * {@see isConfigured()} and the search-key fallback behave correctly.
+     */
+    private function resolve(string $value): string
+    {
+        $parsed = (string) App::parseEnv($value);
+        // Still a bare `$VAR` placeholder → the env var wasn't set.
+        if (preg_match('/^\$\w+$/', $parsed)) {
+            return '';
+        }
+        return $parsed;
     }
 
     /** Full index uid actually used on the Meilisearch host. */

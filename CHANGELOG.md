@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.2 - 2026-06-08
+
+### Fixed
+- Unresolved environment placeholders are now treated as empty. `App::parseEnv('$MEILISEARCH_SEARCH_KEY')` returns the literal `$MEILISEARCH_SEARCH_KEY` string when the env var isn't set; left as-is this was sent as a bogus search key (403 → "Search failed") and made `isConfigured()` report a misconfigured host as ready. The search-only key now correctly falls back to the admin key when its env var is unset.
+
 ## 1.0.1 - 2026-06-08
 
 ### Fixed
