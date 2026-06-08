@@ -36,6 +36,7 @@ import MeilisearchSearch from '@arifje/craft-meilisearch-vue'
 | `filter`      | String \| Array  | `''`                                      | Meilisearch filter, e.g. `sectionHandle = "news"`; array entries are AND-joined |
 | `debounce`    | Number           | `200`                                     | Debounce delay (ms) |
 | `minLength`   | Number           | `1`                                       | Min query length before searching |
+| `autocomplete`| Boolean          | `false`                                   | Render results as a floating typeahead dropdown with keyboard navigation (↑/↓ to move, Enter to open, Esc to close) instead of an inline list |
 
 ### Events
 
@@ -64,7 +65,11 @@ template:
 <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 <script src="/assets/meilisearch-search.global.js"></script>
 
+<!-- inline list -->
 <meilisearch-search placeholder="Search…" limit="10"></meilisearch-search>
+
+<!-- floating autocomplete/typeahead with keyboard nav -->
+<meilisearch-search autocomplete placeholder="Search…" limit="10"></meilisearch-search>
 ```
 
 Attributes map to the same props (`action`, `placeholder`, `limit`, `filter`,

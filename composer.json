@@ -1,7 +1,7 @@
 {
     "name": "arifje/craft-meilisearch",
     "description": "Index and search Craft elements with a hosted Meilisearch instance. Keeps your Meilisearch indexes in sync on element save/delete, exposes a JSON search endpoint, and ships a drop-in Vue 3 search component.",
-    "version": "1.0.2",
+    "version": "1.1.0",
     "type": "craft-plugin",
     "license": "MIT",
     "keywords": [

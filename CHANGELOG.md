@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.0 - 2026-06-08
+
+### Added
+- Optional `autocomplete` mode on the Vue component: renders results as a floating typeahead dropdown with full keyboard navigation (↑/↓ to move, Enter to open the highlighted hit, Esc to close) and combobox ARIA roles. Off by default, so the existing inline list behaviour is unchanged. Available on both the SFC (`<MeilisearchSearch autocomplete />`) and the no-build custom element (`<meilisearch-search autocomplete>`).
+
 ## 1.0.2 - 2026-06-08
 
 ### Fixed
